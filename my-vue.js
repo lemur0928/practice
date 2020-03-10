@@ -13,26 +13,47 @@ var app = new Vue({
     countOfBar: 8,
     totalPage: 6,
     currPage: 1,
-    bpm: 72
+    bpm: 72,
+    isPlay: false
   },
   computed: {
     Verse: function(){
       return this.verses[this.currPage].split("*");
+    },
+    Delay: function(){
+      return 60000 / this.bpm;
     }
   },
   methods: {
-    setBar: function(idx){
-      if( idx <= 0 || idx > this.countOfBar ){
-        return;
-      }
-      this.currBar = idx;
-    },
     setPage: function(idx){
       if( idx <= 0 || idx > this.totalPage ){
+        this.pauseBar();
         return;
       }
       this.currPage = idx;
       this.currBar = 1;
+    },
+    setBar: function(idx){
+      if( idx <= 0 || idx > this.countOfBar ){
+        this.setPage(this.currPage+1);//this.pauseBar();
+        return;
+      }
+      this.currBar = idx;
+    },
+    pauseBar: function(){
+      window.clearInterval(this.timeOutRefresh);
+      if(this.isPlay) {
+        this.isPlay = false;
+      }
+    },
+    playBars: function(){
+      if(this.isPlay === false) {
+        this.isPlay = true;
+        var self = this;
+        this.timeOutRefresh = window.setInterval(() => {
+            self.setBar(this.currBar+1);
+          }, this.Delay);
+      }
     }
   },
   directives: {
