@@ -17,7 +17,7 @@
       <ul>        
         <li v-for="(n, index) in Verse"
             v-bind:class="{'disabled': (index > currBar - 1), 'active': (index < currBar - 1)}" 
-            @click.prevent="setPage(n)"><a href="#">{{n}}</a></li>
+            @click.prevent="setBar(index+1)"><a href="#">{{n}}</a></li>
       </ul>
       </h3>
     </div>
@@ -27,13 +27,13 @@
             @click.prevent="setPage(currPage-1)"><a href="#">Prev</a></li>
         <li v-bind:class="{'disabled': (currPage === totalPage)}" 
             @click.prevent="setPage(currPage+1)"><a href="#">Next</a></li>
-        <li v-bind:class="{'disabled': isPlay}" 
-            @click.prevent="playBars()"><a href="#">Play</a></li>
-        <li v-bind:class="{'disabled': (isPlay === false)}" 
-            @click.prevent="pauseBar()"><a href="#">Pause</a></li>
+      </ul>
+      bpm<input :disabled="isPlay" type="number" v-number-only v-model="bpm" style="width:60px"/>
+      <ul>
+        <li v-if="!isPlay" @click.prevent="playBars()"><a href="#">Play</a></li>
+        <li v-if="isPlay" @click.prevent="pauseBar()"><a href="#">Pause</a></li>
       </ul>
     </div>
-    bpm<input :disabled="isPlay" type="number" v-number-only v-model="bpm"/>
   </div>
 </body>
 </html>
