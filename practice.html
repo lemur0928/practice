@@ -16,7 +16,7 @@
       <h3>
       <ul>        
         <li v-for="(n, index) in Verse"
-            v-bind:class="{'active': (index === currBar - 1), 'disabled': (index < currBar - 1)}" 
+            v-bind:class="{'disabled': (index > currBar - 1), 'active': (index < currBar - 1)}" 
             @click.prevent="setPage(n)"><a href="#">{{n}}</a></li>
       </ul>
       </h3>
