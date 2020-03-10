@@ -11,40 +11,27 @@
   <meta charset="utf-8">
 </head>
 <body>
-  <div id="app">  
-<!--    <table class="table table-condensed">
-      <tr>
-        <th>#</th>
-        <th>name</th>
-        <th>age</th>
-        <th>gender</th>
-      </tr>
-      <tr v-for="(r, index) in filteredRows.slice(pageStart, pageStart + countOfPage)">
-        <td>{{ (currPage-1) * countOfPage + index + 1 }}</td>
-        <td>{{ r.name }}</td>
-        <td>{{ r.age }}</td>
-        <td>{{ r.gender }}</td>
-      </tr>
-    </table> 
--->
+  <div id="app">
     <div class="pagination">
-      <ul>
-        
+      <h3>
+      <ul>        
         <li v-for="(n, index) in Verse"
-            v-bind:class="{'active': (index === 1)}" 
+            v-bind:class="{'active': (index === currBar - 1), 'disabled': (index < currBar - 1)}" 
             @click.prevent="setPage(n)"><a href="#">{{n}}</a></li>
       </ul>
+      </h3>
+    </div>
+    <div class="pagination">
       <ul>
         <li v-bind:class="{'disabled': (currPage === 1)}" 
             @click.prevent="setPage(currPage-1)"><a href="#">Prev</a></li>
         <li v-bind:class="{'disabled': (currPage === totalPage)}" 
             @click.prevent="setPage(currPage+1)"><a href="#">Next</a></li>
+        <li v-bind:class="{'disabled': (currBar === countOfBar)}" 
+            @click.prevent="setBar(currBar+1)"><a href="#">Play</a></li>
       </ul>
     </div>
-    
-<!--    
-    <div>Filter: <input type="text" v-model="filter_name"></div>
--->    
+    bpm<input type="number" v-number-only :value="bpm"/>
   </div>
 </body>
 </html>
