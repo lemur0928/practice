@@ -1,96 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Bootstrap Example</title>
-  <meta charset="utf-8">
+  <title>Rhythm of life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet" type="text/css" />
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <meta charset="utf-8">
 </head>
 <body>
-<div class="jumbotron jumbotron-fluid">
-  <div class="container">
-    <h1 class="display-1">
-    <span class="badge badge-info">Rhythm of life</span></h1>
-    <ul class="pagination pagination-lg">
-      <li class="page-item disabled"><a class="page-link">When I star-ted</a></li>
-      <li class="page-item disabled"><a class="page-link">down _ the _ </a></li>
-      <li class="page-item active"><a class="page-link">street _ last _ </a></li>
-      <li class="page-item"><a class="page-link">Sun- _ day _,</a></li>
-      <li class="page-item"><a class="page-link">Fee-lin' migh-ty</a></li>
-      <li class="page-item"><a class="page-link">low _ and _ </a></li>
-      <li class="page-item"><a class="page-link">kind- _ a _ </a></li>
-      <li class="page-item"><a class="page-link">mean. _ _ _ </a></li>
-    </ul>
-  </div>
-</div>
-<script type="text/javascript">
-    var things = $('.display-1').text().split(" ");
-    var index = 0;
-    var showHide = function() {
-      things.eq(index).fadeIn(2000,function(){
-        $(this).fadeOut(2000);
-      });
-      index++;
-      setTimeout(showHide,3000);
-    };
+  <div id="app">  
+<!--    <table class="table table-condensed">
+      <tr>
+        <th>#</th>
+        <th>name</th>
+        <th>age</th>
+        <th>gender</th>
+      </tr>
+      <tr v-for="(r, index) in filteredRows.slice(pageStart, pageStart + countOfPage)">
+        <td>{{ (currPage-1) * countOfPage + index + 1 }}</td>
+        <td>{{ r.name }}</td>
+        <td>{{ r.age }}</td>
+        <td>{{ r.gender }}</td>
+      </tr>
+    </table> 
+-->
+    <div class="pagination">
+      <ul>
         
-    showHide();
-</script>
-
-<div class="container mt-3">
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link active" data-toggle="tab" href="#home">Home</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="tab" href="#menu1">Menu 1</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="tab" href="#menu2">Menu 2</a>
-    </li>
-  </ul>
-      
-  <div class="tab-content">
-    <div id="home" class="container tab-pane active"><br>
-      <p>Sud-den-ly a voi- _ ce _ said "Go _ forth, _ neigh- _ bor! _ Spread the pic-ture on _ a _ wi- _ der _ screen!" _ And the</p>
+        <li v-for="(n, index) in Verse"
+            v-bind:class="{'active': (index === 1)}" 
+            @click.prevent="setPage(n)"><a href="#">{{n}}</a></li>
+      </ul>
+      <ul>
+        <li v-bind:class="{'disabled': (currPage === 1)}" 
+            @click.prevent="setPage(currPage-1)"><a href="#">Prev</a></li>
+        <li v-bind:class="{'disabled': (currPage === totalPage)}" 
+            @click.prevent="setPage(currPage+1)"><a href="#">Next</a></li>
+      </ul>
     </div>
-    <div id="menu1" class="container tab-pane fade"><br>
-      <p>voice _ said, _ "Neigh-bor, there's-a mil- _ lion _ rea- _ sons _ why you should be glad _ in _ all _ four _ sea- _ sons! _ </p>
-    </div>
-    <div id="menu2" class="container tab-pane fade"><br>
-      <p>Hit the road, _ neigh-bor leave your wor-ries and _ strife! _ Spread _ the re-li-gion of the rhy-thm of _ life." _ For the</p>
-    </div>
+    
+<!--    
+    <div>Filter: <input type="text" v-model="filter_name"></div>
+-->    
   </div>
-</div>
-
-<div class="container p+1 my-3 bg-dark text-white">
-  <div class="row">
-    <div class="col-sm-4">
-      <h3>Column 1</h3>
-      <p>rhy-thm of _ life _ is-a pow-er-ful _ beat, _ Puts-a tin-gle in your fin-gers and-a tin-gle in your feet! _ _ _ </p>
-      <p>Rhy-thm on thi in- _ side, _ rhy-thm on the street, _ and the rhy-thm of _ life _ is-a pow-er-ful _ beat! For the</p>
-    </div>
-    <div class="col-sm-4">
-      <div class="card" style="width:200px">
-        <img class="card-img-top img-fluid rounded-circle" src="https://www.w3schools.com/bootstrap4/img_avatar1.png" alt="Card image" style="width:100%">
-        <div class="card-body">
-          <h4 class="card-title bg-dark text-white">Go, go, go!</h4>
-          <p class="card-text bg-dark text-white">Tell them everything you know!</p>
-          <a href="#" class="btn btn-primary">Go Profile</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-4">
-      <h3>Rhythms</h3>        
-      <p>Milwakee</p>
-      <p>Scranton</p>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
-
