@@ -27,11 +27,13 @@
             @click.prevent="setPage(currPage-1)"><a href="#">Prev</a></li>
         <li v-bind:class="{'disabled': (currPage === totalPage)}" 
             @click.prevent="setPage(currPage+1)"><a href="#">Next</a></li>
-        <li v-bind:class="{'disabled': (currBar === countOfBar)}" 
-            @click.prevent="setBar(currBar+1)"><a href="#">Play</a></li>
+        <li v-bind:class="{'disabled': isPlay}" 
+            @click.prevent="playBars()"><a href="#">Play</a></li>
+        <li v-bind:class="{'disabled': (isPlay === false)}" 
+            @click.prevent="pauseBar()"><a href="#">Pause</a></li>
       </ul>
     </div>
-    bpm<input type="number" v-number-only :value="bpm"/>
+    bpm<input :disabled="isPlay" type="number" v-number-only v-model="bpm"/>
   </div>
 </body>
 </html>
