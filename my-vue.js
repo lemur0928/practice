@@ -14,7 +14,8 @@ var app = new Vue({
     totalPage: 6,
     currPage: 1,
     bpm: 72,
-    isPlay: false
+    isPlay: false,
+    audio: []
   },
   computed: {
     Verse: function(){
@@ -49,8 +50,10 @@ var app = new Vue({
     playBars: function(){
       if(this.isPlay === false) {
         this.isPlay = true;
+        this.audio = new Audio(Array(40).join('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'));
         var self = this;
         this.timeOutRefresh = window.setInterval(() => {
+            self.audio.play();
             self.setBar(this.currBar+1);
           }, this.Delay);
       }
