@@ -1,7 +1,7 @@
-var app = new Vue({
+var vm = new Vue({
   el: '#app',
   data: {
-    verses: [ "",
+    verses: [
       "When I star-ted *down _ the _ *street _ last _ *Sun- _ day _, *Fee-lin' migh-ty *low _ and _ *kind- _ a _ *mean. _ ",
       "Sud-den-ly a *voice _ said _ *\"Go _ forth, _ *neigh- _ bor! _ *Spread the pic-ture *on _ a _ *wi- _ der _ *screen!\" _ And the",
       "voice _ said, _ *\"Neigh-bor, there's-a *mil- _ lion _ *rea- _ sons _ *why you should be *glad _ in _ *all _ four _ *sea- _ sons! _ ",
@@ -9,21 +9,23 @@ var app = new Vue({
       "rhy-thm of _ *life _ is-a *pow-er-ful _ *beat, _ Pu-tsa *tin-gle in your *fin-gers and-a *tin-gle in your *feet! _ ",
       "Rhy-thm on thi *in- _ side, _ *rhy-thm on the *street, _ and the *rhy-thm of _ *life _ is-a *pow-er-ful _ *beat! _ For the"
     ],
+    verse: [],
+    prompt: [],
     currBar: 1,
-    countOfBar: 8,
-    totalPage: 6,
+    totalPage: 0,
     currPage: 1,
+    countOfBar: 8,
     bpm: 72,
-    isPlay: false,
-    audio: []
+    isPlay: false
   },
   computed: {
-    Verse: function(){
-      return this.verses[this.currPage].split("*");
-    },
     Delay: function(){
       return 60000 / this.bpm;
     }
+  },
+  mounted: function(){
+    this.totalPage = this.verses.length;
+    this.setPage(1);
   },
   methods: {
     setPage: function(idx){
@@ -33,27 +35,27 @@ var app = new Vue({
       }
       this.currPage = idx;
       this.currBar = 1;
+      this.verse = this.verses[this.currPage-1].split("*");
+      this.prompt = ( idx === this.totalPage ) ? [] : this.verses[this.currPage].split("*", 2);
     },
     setBar: function(idx){
+      (new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'+Array(1e2).join(123))).play();
+
       if( idx <= 0 || idx > this.countOfBar ){
-        this.setPage(this.currPage+1);//this.pauseBar();
+        this.setPage(this.currPage+1);
         return;
       }
       this.currBar = idx;
     },
     pauseBar: function(){
       window.clearInterval(this.timeOutRefresh);
-      if(this.isPlay) {
-        this.isPlay = false;
-      }
+      this.isPlay = false;
     },
     playBars: function(){
-      if(this.isPlay === false) {
+      if(!this.isPlay) {
         this.isPlay = true;
-        this.audio = new Audio(Array(40).join('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'));
         var self = this;
         this.timeOutRefresh = window.setInterval(() => {
-            self.audio.play();
             self.setBar(this.currBar+1);
           }, this.Delay);
       }
