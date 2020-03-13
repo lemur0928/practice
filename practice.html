@@ -13,15 +13,6 @@
 <body>
   <div id="app">
     <div class="pagination">
-      <h3>
-      <ul>        
-        <li v-for="(n, index) in Verse"
-            v-bind:class="{'disabled': (index > currBar - 1), 'active': (index < currBar - 1)}" 
-            @click.prevent="setBar(index+1)"><a href="#">{{n}}</a></li>
-      </ul>
-      </h3>
-    </div>
-    <div class="pagination">
       <ul>
         <li v-bind:class="{'disabled': (currPage === 1)}" 
             @click.prevent="setPage(currPage-1)"><a href="#">Prev</a></li>
@@ -34,7 +25,20 @@
         <li v-if="isPlay" @click.prevent="pauseBar()"><a href="#">Pause</a></li>
       </ul>
     </div>
+    <div class="pagination">
+      <h3>
+      <ul>        
+        <li v-for="(n, index) in verse"
+            v-bind:class="{'disabled': (index > currBar - 1), 'active': (index < currBar - 1)}" 
+            @click.prevent="setBar(index+1)"><a href="#">{{n}}</a></li>
+      </ul>
+      </h3>
+    </div>
+    <h4>
+      <ul>        
+        <li v-for="(n, index) in prompt">{{n}}</li>
+      </ul>
+    </h4>
   </div>
-  <script src="my-vue.js"></script>
 </body>
 </html>
