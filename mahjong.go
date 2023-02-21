@@ -228,7 +228,6 @@ func main() {
 		p.hand[m.hand] = m.deal1()
 		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[m.hand]))
 		m.iShowBonus(p, m.hand)
-		p.hand = [17]int{0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40, 44}
 		if len(m.sea) <= 0 {
 			fmt.Printf("\n和局")
 			break
@@ -239,6 +238,6 @@ func main() {
 
 		p.play(0, m.hand)
 		fmt.Printf("\n%d打 %s_", player, m.nToChinese(p.hand[m.hand]))
-		p.hand[m.hand] = -1 // 打出的排移出牌組
+		p.hand[m.hand] = -1 // 打出的牌移出玩家
 	}
 }
