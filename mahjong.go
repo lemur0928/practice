@@ -8,7 +8,6 @@ import (
 
 type Mahjong struct {
 	hand    int
-	tiles   Tiles
 	players [4]Player
 	sea     []int
 }
@@ -18,48 +17,8 @@ type Player struct {
 	table []int
 }
 
-type Suited struct {
-	dots    [9][4]rune // 筒子; 餅
-	bamboos [9][4]rune // 索子; 條
-	chars   [9][4]rune // 萬子
-}
-
-type Honors struct {
-	winds   [4][4]rune // 風牌; 東南西北
-	dragons [3][4]rune // 三元牌; 中發白
-}
-
-type Bonus struct {
-	seasonsFlowers [8]rune // 花牌; 春夏秋冬, 梅蘭菊竹
-}
-
-type Tiles struct {
-	total   int    // 總張數
-	numbers Suited // 數字牌
-	honors  Honors // 字牌
-	bonus   Bonus  // 花牌
-}
-
-func (t *Tiles) nToRune(n int) (r rune) {
-	if n < 0 || n >= t.total {
-		return 0
-	} else if n < 9*4 { // 餅
-		return rune('a' + n/4) // 1~9筒 "abcdefghi"
-	} else if n < 2*9*4 { // 條
-		return rune('A' - 9 + n/4) // 1~9索 "ABCDEFGHI"
-	} else if n < 3*9*4 { // 萬
-		return rune('1' - 2*9 + n/4) // 1~9萬 "123456789"
-	} else if n < 4*4+3*9*4 { // 風
-		return []rune{'>', 'v', '<', '^'}[-3*9+n/4] // 東南西北 ">v<^"
-	} else if n < 3*4+4*4+3*9*4 { // 龍
-		return []rune{'*', '$', '@', '^'}[-4-3*9+n/4] // 中發白 "*$@"
-	} else { // 花
-		return []rune{'u', 'x', 'q', 'o', 'm', 'l', 'j', 'z'}[-3-4-3*9+n/4] // 春夏秋冬 "uxqo", 梅蘭菊竹 "mljz"
-	}
-}
-
 func (m *Mahjong) nToChinese(n int) (s string) {
-	if n < 0 || n >= m.tiles.total {
+	if n < 0 || n >= 3*9*4 + 4*4 + 3*4 + 8 {
 		return "？"
 	} else if n < 9*4 { // 餅
 		return string(rune('1'+n/4)) + "筒" // 1~9筒
@@ -85,9 +44,7 @@ func (m *Mahjong) deal1() (n int) {
 }
 
 func (m *Mahjong) initDeal() {
-	m.tiles.total = 3*9*4 + 4*4 + 3*4 + 8 // 總張數
-	m.sea = rand.Perm(m.tiles.total)
-
+	m.sea = rand.Perm(3*9*4 + 4*4 + 3*4 + 8)
 	for i := 0; i < m.hand; i++ {
 		for j := 0; j < 4; j++ {
 			m.players[j].hand[i] = m.deal1()
@@ -261,15 +218,6 @@ func (m *Mahjong) findSuitPair(pad int, s []int, pairs *[]int) { // 順的眼 //
 func main() {
 	m := Mahjong{}
 	m.hand = 16 // 十六張麻將
-	/*
-		for i := 0; i < 9; i++ {
-			num := rune(i + 1)
-			for j := 0; j < 4; j++ {
-				m.tiles.numbers.dots[i][j] = num
-				m.tiles.numbers.bamboos[i][j] = num
-				m.tiles.numbers.chars[i][j] = num
-			}
-		}*/
 	m.initDeal()
 	m.showBonus()
 
