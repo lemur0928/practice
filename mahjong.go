@@ -9,16 +9,18 @@ import (
 type Mahjong struct {
 	hand    int
 	players [4]Player
+	remain  []int
 	sea     []int
 }
 
 type Player struct {
 	hand  [17]int
 	table []int
+	see   [3*9 + 4 + 3]int // 數牌與字牌剩下的數量
 }
 
 func (m *Mahjong) nToChinese(n int) (s string) {
-	if n < 0 || n >= 3*9*4 + 4*4 + 3*4 + 8 {
+	if n < 0 || n >= 3*9*4+4*4+3*4+8 {
 		return "？"
 	} else if n < 9*4 { // 餅
 		return string(rune('1'+n/4)) + "筒" // 1~9筒
@@ -37,14 +39,14 @@ func (m *Mahjong) nToChinese(n int) (s string) {
 
 func (m *Mahjong) deal1() (n int) {
 	tile := -1
-	if len(m.sea) > 0 { // 有牌可發
-		tile, m.sea = m.sea[0], m.sea[1:]
+	if len(m.remain) > 0 { // 有牌可發
+		tile, m.remain = m.remain[0], m.remain[1:]
 	}
 	return tile
 }
 
 func (m *Mahjong) initDeal() {
-	m.sea = rand.Perm(3*9*4 + 4*4 + 3*4 + 8)
+	m.remain = rand.Perm(3*9*4 + 4*4 + 3*4 + 8)
 	for i := 0; i < m.hand; i++ {
 		for j := 0; j < 4; j++ {
 			m.players[j].hand[i] = m.deal1()
@@ -60,6 +62,7 @@ func (m *Mahjong) showBonus() { // 補花
 			fmt.Printf(" %s", m.nToChinese(p.hand[i]))
 			m.iShowBonus(p, i)
 		}
+		// m.initSee(p) // 可摸的牌不含手上的牌
 	}
 }
 
@@ -73,6 +76,20 @@ func (m *Mahjong) iShowBonus(p *Player, i int) {
 		fmt.Printf("補 %s", m.nToChinese(n))
 	}
 	p.hand[i] = n
+}
+
+func (m *Mahjong) initSee(p *Player) {
+	for _, t := range p.hand[:m.hand] { // 不含將打出去的牌
+		p.addSee(t) // 可摸的牌不含手上的牌
+	}
+}
+
+func (p *Player) addSee(t int) {
+	p.see[t/4]++ // 可摸的牌不含剛打出的牌
+}
+
+func (m *Mahjong) decidePlay(p *Player) (n int) {
+	return rand.Intn(m.hand + 1) // 隨機選一張牌
 }
 
 func (p *Player) play(n int, hand int) {
@@ -223,21 +240,32 @@ func main() {
 
 	fmt.Println()
 
-	for player := 0; len(m.sea) > 0; player = (player + 1) % 4 {
+	for player := 0; len(m.remain) > 0; player = (player + 1) % 4 {
 		p := &m.players[player]
 		p.hand[m.hand] = m.deal1()
 		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[m.hand]))
 		m.iShowBonus(p, m.hand)
-		if len(m.sea) <= 0 {
+		//p.hand = [17]int{0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40, 44}
+		if len(m.remain) <= 0 {
 			fmt.Printf("\n和局")
+			sort.Ints(m.sea)
+			fmt.Println(m.sea)
+			for player = 0; player < 4; player++ {
+				fmt.Println(m.players[player].see)
+			}
 			break
 		} else if m.isWin(p) {
 			fmt.Printf("\n%d胡", player)
 			break
 		}
-
-		p.play(0, m.hand)
+		p.addSee(p.hand[m.hand])        // 記錄摸到的牌
+		p.play(m.decidePlay(p), m.hand) // 將打出的牌與摸到的牌交換
 		fmt.Printf("\n%d打 %s_", player, m.nToChinese(p.hand[m.hand]))
+		m.sea = append(m.sea, p.hand[m.hand]) // 海底加上打出的牌
+		for other := 1; other < 4; other++ {  // 其他三家記錄打出的牌
+			(&m).players[(player+other)%4].addSee(p.hand[m.hand])
+		}
 		p.hand[m.hand] = -1 // 打出的牌移出玩家
 	}
 }
+
