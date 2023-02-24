@@ -102,11 +102,15 @@ func (m *Mahjong) sort(tiles [17]int) (s []int) {
 	return s
 }
 
-func (m *Mahjong) gates(p *Player) (g []int) { // 聽哪些牌
-	hist, candidate := [3*9 + 4 + 3]int{}, []int{}
+func (m *Mahjong) gates(p *Player) map[int]float32 { // 聽哪些牌
+	hist, candidate, g := [3*9 + 4 + 3]int{}, map[int]float32{}, map[int]float32{}
 	for _, t := range p.hand[:m.hand+1] {
-		hist[t/4]++
+		if t/4 < 3*9+4+3 { // 有牌可補花
+			hist[t/4]++
+		}
 	}
+
+	// 把所有牌面有的萬筒條每一個數字都當作候選聽牌
 	for i := 1; i < 9; i++ {
 		hist[i] += hist[i-1]
 		hist[i+9] += hist[i+9-1]
@@ -119,15 +123,15 @@ func (m *Mahjong) gates(p *Player) (g []int) { // 聽哪些牌
 	}
 	for i, count := range p.see {
 		if hist[i] > 0 && count < 4 { // 尚未出現所有4張牌
-			candidate = append(candidate, i*4)
+			candidate[i*4] = 1.0
 		}
 	}
-	fmt.Println(candidate)
+
 	for i, t := range p.hand[:m.hand+1] {
-		for _, c := range candidate {
+		for c := range candidate {
 			p.hand[i] = c // 假設打出第i張牌
 			if m.isWin(p) {
-				g = append(g, c)
+				g[(t/4)*4]++
 			}
 			p.hand[i] = t // 還原第i張牌
 		}
@@ -136,30 +140,26 @@ func (m *Mahjong) gates(p *Player) (g []int) { // 聽哪些牌
 }
 
 func (m *Mahjong) isWin(p *Player) (win bool) { //是否胡牌
-	sortedHand, pairs := m.sort(p.hand), []int{}
+	sortedHand, pairs, uniquePairs := m.sort(p.hand), []int{}, map[int]int{}
 	suited, honor := m.findPair(sortedHand, &pairs) // 找到眼及牌點與字的分佈
 
-	for _, n := range sortedHand {
-		fmt.Printf(" %s", m.nToChinese(n))
-	}
-	for _, n := range p.table {
-		fmt.Printf("|%s", m.nToChinese(n))
+	for _, index := range pairs {
+		uniquePairs[sortedHand[index]/4]++
 	}
 
-	for _, a := range pairs {
-		n := sortedHand[a]
-		if n < 3*4*9 { // 數牌
-			suited[n/4] -= 2
+	for n := range uniquePairs {
+		if n < 3*9 { // 數牌
+			suited[n] -= 2
 			if isHonor(honor) && m.isSuit(suited) { // 去掉眼和字牌，找數牌胡牌型
 				return true
 			}
-			suited[n/4] += 2
+			suited[n] += 2
 		} else { // 字牌
-			honor[n/4-3*9] -= 2
+			honor[n-3*9] -= 2
 			if isHonor(honor) && m.isSuit(suited) { // 去掉眼和字牌，找數牌胡牌型
 				return true
 			}
-			honor[n/4-3*9] += 2
+			honor[n-3*9] += 2
 		}
 	}
 	return false
@@ -240,7 +240,7 @@ func (m *Mahjong) findiPair(pad int, s []int, i int, pairs *[]int) {
 	if j >= len(s) || s[i]/4 != s[j]/4 || (i > 0 && s[i-1]/4 == s[i]/4) {
 		return
 	} // 每張牌有4個複製, 只取第一次看到的複製
-	fmt.Printf(" 眼%s", m.nToChinese(s[i]))
+	// fmt.Printf(" 眼%s", m.nToChinese(s[i]))
 	*pairs = append(*pairs, pad+i)
 }
 
@@ -278,19 +278,14 @@ func main() {
 		p.hand[m.hand] = m.deal1()
 		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[m.hand]))
 		m.iShowBonus(p, m.hand)
-		p.hand = [17]int{0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40, 44}
+		//p.hand = [17]int{44, 0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40}
 		gates := m.gates(p)
-		fmt.Printf("\n聽")
-		for _, n := range gates {
-			fmt.Printf(" %s", m.nToChinese(n))
+		fmt.Printf(" 打後聽牌:")
+		for gate, chance := range gates {
+			fmt.Printf(" %s=%f", m.nToChinese(gate), chance)
 		}
 		if len(m.remain) <= 0 {
 			fmt.Printf("\n和局")
-			sort.Ints(m.sea)
-			fmt.Println(m.sea)
-			for player = 0; player < 4; player++ {
-				fmt.Println(m.players[player].see)
-			}
 			break
 		} else if m.isWin(p) {
 			fmt.Printf("\n%d胡", player)
@@ -299,6 +294,14 @@ func main() {
 		p.addSee(p.hand[m.hand])        // 記錄摸到的牌
 		p.play(m.decidePlay(p), m.hand) // 將打出的牌與摸到的牌交換
 		fmt.Printf("\n%d打 %s_", player, m.nToChinese(p.hand[m.hand]))
+
+		for _, t := range p.hand[:m.hand] {
+			fmt.Printf(" %s", m.nToChinese(t))
+		}
+		for _, t := range p.table {
+			fmt.Printf("|%s", m.nToChinese(t))
+		}
+
 		m.sea = append(m.sea, p.hand[m.hand]) // 海底加上打出的牌
 		for other := 1; other < 4; other++ {  // 其他三家記錄打出的牌
 			(&m).players[(player+other)%4].addSee(p.hand[m.hand])
