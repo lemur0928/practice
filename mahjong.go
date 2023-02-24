@@ -102,6 +102,39 @@ func (m *Mahjong) sort(tiles [17]int) (s []int) {
 	return s
 }
 
+func (m *Mahjong) gates(p *Player) (g []int) { // 聽哪些牌
+	hist, candidate := [3*9 + 4 + 3]int{}, []int{}
+	for _, t := range p.hand[:m.hand+1] {
+		hist[t/4]++
+	}
+	for i := 1; i < 9; i++ {
+		hist[i] += hist[i-1]
+		hist[i+9] += hist[i+9-1]
+		hist[i+2*9] += hist[i+2*9-1]
+	}
+	for i := 0; i < 9-1; i++ {
+		hist[i] = hist[9-1]
+		hist[i+9] += hist[2*9-1]
+		hist[i+2*9] += hist[3*9-1]
+	}
+	for i, count := range p.see {
+		if hist[i] > 0 && count < 4 { // 尚未出現所有4張牌
+			candidate = append(candidate, i*4)
+		}
+	}
+	fmt.Println(candidate)
+	for i, t := range p.hand[:m.hand+1] {
+		for _, c := range candidate {
+			p.hand[i] = c // 假設打出第i張牌
+			if m.isWin(p) {
+				g = append(g, c)
+			}
+			p.hand[i] = t // 還原第i張牌
+		}
+	}
+	return g
+}
+
 func (m *Mahjong) isWin(p *Player) (win bool) { //是否胡牌
 	sortedHand, pairs := m.sort(p.hand), []int{}
 	suited, honor := m.findPair(sortedHand, &pairs) // 找到眼及牌點與字的分佈
@@ -245,7 +278,12 @@ func main() {
 		p.hand[m.hand] = m.deal1()
 		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[m.hand]))
 		m.iShowBonus(p, m.hand)
-		//p.hand = [17]int{0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40, 44}
+		p.hand = [17]int{0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40, 44}
+		gates := m.gates(p)
+		fmt.Printf("\n聽")
+		for _, n := range gates {
+			fmt.Printf(" %s", m.nToChinese(n))
+		}
 		if len(m.remain) <= 0 {
 			fmt.Printf("\n和局")
 			sort.Ints(m.sea)
@@ -268,4 +306,3 @@ func main() {
 		p.hand[m.hand] = -1 // 打出的牌移出玩家
 	}
 }
-
