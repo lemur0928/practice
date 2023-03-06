@@ -17,6 +17,8 @@ type Player struct {
 	hand  [17]int
 	table []int
 	see   [3*9 + 4 + 3]int // 數牌與字牌剩下的數量
+	cPlay map[int]int      // 打出手牌的機率
+	gates map[int]int      // 聽哪些牌
 }
 
 func (m *Mahjong) nToChinese(n int) (s string) {
@@ -62,7 +64,7 @@ func (m *Mahjong) showBonus() { // 補花
 			fmt.Printf(" %s", m.nToChinese(p.hand[i]))
 			m.iShowBonus(p, i)
 		}
-		// m.initSee(p) // 可摸的牌不含手上的牌
+		m.initSee(p) // 可摸的牌不含手上的牌
 	}
 }
 
@@ -89,6 +91,31 @@ func (p *Player) addSee(t int) {
 }
 
 func (m *Mahjong) decidePlay(p *Player) (n int) {
+	// 打後聽最多牌的牌
+	key, value := -10, 0
+	for k, v := range p.gates {
+		if v > value {
+			key, value = k, v
+		}
+	}
+	for i, t := range p.hand[:m.hand+1] {
+		if t/4 == key/4 {
+			return i // 選打後聽最多的牌
+		}
+	}
+
+	// 打最常出現的牌
+	key, value = -10, 4
+	for k, v := range p.cPlay {
+		if v <= value {
+			key, value = k, v
+		}
+	}
+	for i, t := range p.hand[:m.hand+1] {
+		if t/4 == key/4 {
+			return i // 選最常出現的牌
+		}
+	}
 	return rand.Intn(m.hand + 1) // 隨機選一張牌
 }
 
@@ -102,8 +129,9 @@ func (m *Mahjong) sort(tiles [17]int) (s []int) {
 	return s
 }
 
-func (m *Mahjong) gates(p *Player) map[int]float32 { // 聽哪些牌
-	hist, candidate, g := [3*9 + 4 + 3]int{}, map[int]float32{}, map[int]float32{}
+func (m *Mahjong) gates(p *Player) map[int]int { // 聽哪些牌
+	p.cPlay = map[int]int{} //  沒出過幾張牌
+	hist, candidate, g := [3*9 + 4 + 3]int{}, map[int]int{}, map[int]int{}
 	for _, t := range p.hand[:m.hand+1] {
 		if t/4 < 3*9+4+3 { // 有牌可補花
 			hist[t/4]++
@@ -123,13 +151,14 @@ func (m *Mahjong) gates(p *Player) map[int]float32 { // 聽哪些牌
 	}
 	for i, count := range p.see {
 		if hist[i] > 0 && count < 4 { // 尚未出現所有4張牌
-			candidate[i*4] = 1.0
+			candidate[i*4] += count // 越出過的牌計算越大
 		}
 	}
 
 	for i, t := range p.hand[:m.hand+1] {
+		p.cPlay[i] = 4 - p.see[t/4]
 		for c := range candidate {
-			p.hand[i] = c // 假設打出第i張牌
+			p.hand[i] = c // 假設摸入第i張牌
 			if m.isWin(p) {
 				g[(t/4)*4]++
 			}
@@ -278,10 +307,12 @@ func main() {
 		p.hand[m.hand] = m.deal1()
 		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[m.hand]))
 		m.iShowBonus(p, m.hand)
-		//p.hand = [17]int{44, 0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 36, 40}
-		gates := m.gates(p)
+		// p.hand = [17]int{44, 0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 41, 40}
+		p.addSee(p.hand[m.hand]) // 記錄摸到的牌
+
+		p.gates = m.gates(p)
 		fmt.Printf(" 打後聽牌:")
-		for gate, chance := range gates {
+		for gate, chance := range p.gates {
 			fmt.Printf(" %s=%f", m.nToChinese(gate), chance)
 		}
 		if len(m.remain) <= 0 {
@@ -289,9 +320,11 @@ func main() {
 			break
 		} else if m.isWin(p) {
 			fmt.Printf("\n%d胡", player)
+			for _, t := range p.hand[:m.hand] {
+				fmt.Printf(" %s", m.nToChinese(t))
+			}
 			break
 		}
-		p.addSee(p.hand[m.hand])        // 記錄摸到的牌
 		p.play(m.decidePlay(p), m.hand) // 將打出的牌與摸到的牌交換
 		fmt.Printf("\n%d打 %s_", player, m.nToChinese(p.hand[m.hand]))
 
