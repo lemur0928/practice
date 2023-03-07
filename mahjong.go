@@ -7,13 +7,14 @@ import (
 )
 
 type Mahjong struct {
-	hand    int
+	nHand   int
 	players [4]Player
 	remain  []int
 	sea     []int
 }
 
 type Player struct {
+	nHand int
 	hand  [17]int
 	table []int
 	see   [3*9 + 4 + 3]int // 數牌與字牌剩下的數量
@@ -49,10 +50,13 @@ func (m *Mahjong) deal1() (n int) {
 
 func (m *Mahjong) initDeal() {
 	m.remain = rand.Perm(3*9*4 + 4*4 + 3*4 + 8)
-	for i := 0; i < m.hand; i++ {
+	for i := 0; i < m.nHand; i++ {
 		for j := 0; j < 4; j++ {
 			m.players[j].hand[i] = m.deal1()
 		}
+	}
+	for i := 0; i < 4; i++ {
+		m.players[i].nHand = m.nHand
 	}
 }
 
@@ -60,7 +64,7 @@ func (m *Mahjong) showBonus() { // 補花
 	for player := 0; player < 4; player++ {
 		p := &(m.players[player])
 		fmt.Printf("\n%d", player)
-		for i := 0; i < m.hand; i++ {
+		for i := 0; i < p.nHand; i++ {
 			fmt.Printf(" %s", m.nToChinese(p.hand[i]))
 			m.iShowBonus(p, i)
 		}
@@ -81,7 +85,7 @@ func (m *Mahjong) iShowBonus(p *Player, i int) {
 }
 
 func (m *Mahjong) initSee(p *Player) {
-	for _, t := range p.hand[:m.hand] { // 不含將打出去的牌
+	for _, t := range p.hand[:p.nHand] { // 不含將打出去的牌
 		p.addSee(t) // 可摸的牌不含手上的牌
 	}
 }
@@ -98,7 +102,7 @@ func (m *Mahjong) decidePlay(p *Player) (n int) {
 			key, value = k, v
 		}
 	}
-	for i, t := range p.hand[:m.hand+1] {
+	for i, t := range p.hand[:p.nHand+1] {
 		if t/4 == key/4 {
 			return i // 選打後聽最多的牌
 		}
@@ -111,12 +115,12 @@ func (m *Mahjong) decidePlay(p *Player) (n int) {
 			key, value = k, v
 		}
 	}
-	for i, t := range p.hand[:m.hand+1] {
+	for i, t := range p.hand[:p.nHand+1] {
 		if t/4 == key/4 {
 			return i // 選最常出現的牌
 		}
 	}
-	return rand.Intn(m.hand + 1) // 隨機選一張牌
+	return rand.Intn(p.nHand + 1) // 隨機選一張牌
 }
 
 func (p *Player) play(n int, hand int) {
@@ -132,7 +136,7 @@ func (m *Mahjong) sort(tiles [17]int) (s []int) {
 func (m *Mahjong) gates(p *Player) map[int]int { // 聽哪些牌
 	p.cPlay = map[int]int{} //  沒出過幾張牌
 	hist, candidate, g := [3*9 + 4 + 3]int{}, map[int]int{}, map[int]int{}
-	for _, t := range p.hand[:m.hand+1] {
+	for _, t := range p.hand[:p.nHand+1] {
 		if t/4 < 3*9+4+3 { // 有牌可補花
 			hist[t/4]++
 		}
@@ -155,7 +159,7 @@ func (m *Mahjong) gates(p *Player) map[int]int { // 聽哪些牌
 		}
 	}
 
-	for i, t := range p.hand[:m.hand+1] {
+	for i, t := range p.hand[:p.nHand+1] {
 		p.cPlay[i] = 4 - p.see[t/4]
 		for c := range candidate {
 			p.hand[i] = c // 假設摸入第i張牌
@@ -296,7 +300,7 @@ func (m *Mahjong) findSuitPair(pad int, s []int, pairs *[]int) { // 順的眼 //
 
 func main() {
 	m := Mahjong{}
-	m.hand = 16 // 十六張麻將
+	m.nHand = 16 // 十六張麻將
 	m.initDeal()
 	m.showBonus()
 
@@ -304,11 +308,12 @@ func main() {
 
 	for player := 0; len(m.remain) > 0; player = (player + 1) % 4 {
 		p := &m.players[player]
-		p.hand[m.hand] = m.deal1()
-		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[m.hand]))
-		m.iShowBonus(p, m.hand)
+		p.hand[p.nHand] = m.deal1()
+		fmt.Printf("\n%d摸 %s", player, m.nToChinese(p.hand[p.nHand]))
+		m.iShowBonus(p, p.nHand)
 		// p.hand = [17]int{44, 0, 1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 33, 34, 35, 41, 40}
-		p.addSee(p.hand[m.hand]) // 記錄摸到的牌
+		pTile := p.hand[p.nHand]
+		p.addSee(pTile) // 記錄摸到的牌
 
 		p.gates = m.gates(p)
 		fmt.Printf(" 打後聽牌:")
@@ -320,25 +325,26 @@ func main() {
 			break
 		} else if m.isWin(p) {
 			fmt.Printf("\n%d胡", player)
-			for _, t := range p.hand[:m.hand] {
+			for _, t := range p.hand[:p.nHand] {
 				fmt.Printf(" %s", m.nToChinese(t))
 			}
 			break
 		}
-		p.play(m.decidePlay(p), m.hand) // 將打出的牌與摸到的牌交換
-		fmt.Printf("\n%d打 %s_", player, m.nToChinese(p.hand[m.hand]))
+		p.play(m.decidePlay(p), p.nHand) // 將打出的牌與摸到的牌交換
+		pTile = p.hand[p.nHand]
+		fmt.Printf("\n%d打 %s_", player, m.nToChinese(pTile))
 
-		for _, t := range p.hand[:m.hand] {
+		for _, t := range p.hand[:p.nHand] {
 			fmt.Printf(" %s", m.nToChinese(t))
 		}
 		for _, t := range p.table {
 			fmt.Printf("|%s", m.nToChinese(t))
 		}
 
-		m.sea = append(m.sea, p.hand[m.hand]) // 海底加上打出的牌
-		for other := 1; other < 4; other++ {  // 其他三家記錄打出的牌
-			(&m).players[(player+other)%4].addSee(p.hand[m.hand])
+		m.sea = append(m.sea, pTile)         // 海底加上打出的牌
+		for other := 1; other < 4; other++ { // 其他三家記錄打出的牌
+			(&m).players[(player+other)%4].addSee(pTile)
 		}
-		p.hand[m.hand] = -1 // 打出的牌移出玩家
+		p.hand[p.nHand] = -1 // 打出的牌移出玩家
 	}
 }
